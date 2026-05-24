@@ -1,0 +1,6 @@
+{
+  "appId": "com.pdfvault.app",
+  "appName": "PDF Vault",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}
