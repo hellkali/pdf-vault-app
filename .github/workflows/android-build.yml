@@ -20,7 +20,6 @@ jobs:
       with:
         node-version: 24
 
-    # Native Ubuntu setup bypassing the legacy setup-java v4 action entirely
     - name: Set up Java JDK 17 (Native)
       run: |
         sudo apt-get update
@@ -28,10 +27,12 @@ jobs:
         echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
         echo "/usr/lib/jvm/java-17-openjdk-amd64/bin" >> $GITHUB_PATH
 
-    - name: Install Project Dependencies
+    - name: Prepare Web Assets & Install Dependencies
       run: |
         npm install
-        npx cap init "PDF Vault" "com.pdfvault.app" --web-dir=.
+        mkdir www
+        mv index.html www/
+        npx cap init "PDF Vault" "com.pdfvault.app" --web-dir=www
 
     - name: Add Android Platform Wrapper
       run: |
