@@ -311,7 +311,58 @@
     </style>
 </head>
 <body>
+<div id="loginScreen" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:white;
+display:flex;
+justify-content:center;
+align-items:center;
+z-index:9999;
+">
 
+<div style="
+background:white;
+padding:30px;
+border-radius:12px;
+box-shadow:0 0 20px rgba(0,0,0,0.1);
+text-align:center;
+width:300px;
+">
+
+<h2>PDF Vault Login</h2>
+
+<img id="userPhoto"
+style="
+width:80px;
+height:80px;
+border-radius:50%;
+display:none;
+margin:auto;
+margin-bottom:10px;
+">
+
+<p id="userName"></p>
+
+<button id="loginBtn">
+Login with Google
+</button>
+
+<button id="logoutBtn"
+style="
+display:none;
+margin-top:10px;
+background:red;
+">
+Logout
+</button>
+
+</div>
+
+</div>
 <div class="container">
     <header>
         <div>
@@ -368,7 +419,79 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+const firebaseConfig = {
+  apiKey: "AIzaSyBXImwyYglr_VHGmA4hpO05MAdjyH4yfAg",
+  authDomain: "pdfvaultapp-cfdd5.firebaseapp.com",
+  projectId: "pdfvaultapp-cfdd5",
+  storageBucket: "pdfvaultapp-cfdd5.firebasestorage.app",
+  messagingSenderId: "457293917107",
+  appId: "1:457293917107:web:1704369fd0f7bac77179c6",
+  measurementId: "G-SPVGB1GQDK"
+};
+    const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const provider = new GoogleAuthProvider();
+
+const loginBtn = document.getElementById("loginBtn");
+
+const logoutBtn = document.getElementById("logoutBtn");
+
+loginBtn.onclick = async () => {
+
+  try {
+
+    await signInWithPopup(auth, provider);
+
+  } catch(error) {
+
+    alert(error.message);
+  }
+};
+
+logoutBtn.onclick = async () => {
+
+  await signOut(auth);
+};
+
+onAuthStateChanged(auth, (user) => {
+
+  if(user){
+
+    document.getElementById("loginScreen")
+    .style.display = "none";
+
+    document.getElementById("userPhoto")
+    .src = user.photoURL;
+
+    document.getElementById("userPhoto")
+    .style.display = "block";
+
+    document.getElementById("userName")
+    .innerText = user.displayName;
+
+    loginBtn.style.display = "none";
+
+    logoutBtn.style.display = "block";
+
+  } else {
+
+    document.getElementById("loginScreen")
+    .style.display = "flex";
+  }
+});
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     // Using IndexedDB to safely store large PDF files locally in the user's browser without the tight limits of LocalStorage.
     let db;
     const DB_NAME = "PDFStorageVaultDB";
