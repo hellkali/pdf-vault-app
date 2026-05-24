@@ -4,7 +4,6 @@ on:
   push:
     branches: [ "main" ]
 
-# Explicitly opt-in directly at the project root to silence intermediate checker alerts
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -13,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Upgraded to v6 to completely clear structural Node 20 metadata flags
     - name: Checkout Source Code
       uses: actions/checkout@v6
 
@@ -22,11 +20,13 @@ jobs:
       with:
         node-version: 24
 
-    - name: Set up Java JDK 17
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'zulu'
-        java-version: '17'
+    # Native Ubuntu setup bypassing the legacy setup-java v4 action entirely
+    - name: Set up Java JDK 17 (Native)
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y openjdk-17-jdk
+        echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
+        echo "/usr/lib/jvm/java-17-openjdk-amd64/bin" >> $GITHUB_PATH
 
     - name: Install Project Dependencies
       run: |
