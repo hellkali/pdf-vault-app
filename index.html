@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal PDF Storage Vault</title>
+    <style>
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            padding: 2rem 1rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 2.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .storage-indicator {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--border);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+        }
+
+        /* Layout Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Sidebar Card */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            height: fit-content;
+        }
+
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1.2rem;
+            color: var(--text-main);
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.87rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            color: var(--text-main);
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 0.65rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background: #fff;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--accent);
+        }
+
+        .file-dropzone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        .file-dropzone:hover {
+            border-color: var(--accent);
+            background: #f0f7ff;
+        }
+
+        .file-dropzone input[type="file"] {
+            display: none;
+        }
+
+        .file-dropzone p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .file-selected-name {
+            font-size: 0.85rem;
+            color: var(--success);
+            font-weight: 600;
+            margin-top: 0.5rem;
+            word-break: break-all;
+        }
+
+        btn, button {
+            display: inline-block;
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        btn:hover, button:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Main Content Dashboard */
+        .dashboard-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 0.4rem 0.8rem;
+            background: var(--border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        /* PDF Grid List */
+        .pdf-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .pdf-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pdf-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .subject-badge {
+            align-self: flex-start;
+            background: #eff6ff;
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .pdf-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+            word-break: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .pdf-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1.2rem;
+        }
+
+        .pdf-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: auto;
+        }
+
+        .btn-view {
+            background: #f1f5f9;
+            color: var(--text-main);
+            flex: 1;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .btn-view:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-delete {
+            background: #fef2f2;
+            color: var(--danger);
+            width: 40px;
+            flex-grow: 0;
+            padding: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .btn-delete:hover {
+            background: #fee2e2;
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            background: var(--bg-card);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            stroke: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Document & PDF Storage Vault
+            </h1>
+        </div>
+        <div class="storage-indicator" id="storageCount">0 Files Saved</div>
+    </header>
+
+    <div class="grid">
+        <!-- Sidebar: Upload form -->
+        <div class="card">
+            <h2>Add New Document</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="customSubject">Subject / Category</label>
+                    <input type="text" id="customSubject" placeholder="e.g., Math, Invoices, Receipts" required list="existingSubjects">
+                    <datalist id="existingSubjects"></datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="customName">Document Custom Name</label>
+                    <input type="text" id="customName" placeholder="e.g., Week 1 Lecture Notes" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Select PDF File</label>
+                    <div class="file-dropzone" onclick="document.getElementById('fileInput').click()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="stroke: var(--text-muted);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <p>Click to browse files</p>
+                        <input type="file" id="fileInput" accept="application/pdf" required>
+                        <div class="file-selected-name" id="fileSelectedName"></div>
+                    </div>
+                </div>
+
+                <button type="submit">Save to Storage</button>
+            </form>
+        </div>
+
+        <!-- Main Workspace -->
+        <div>
+            <div class="dashboard-controls">
+                <div class="filter-tabs" id="subjectTabs">
+                    <div class="tab active" onclick="filterBySubject('ALL')">All Subjects</div>
+                </div>
+            </div>
+
+            <div class="pdf-list" id="pdfList">
+                <!-- Dynamic Content injected here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Using IndexedDB to safely store large PDF files locally in the user's browser without the tight limits of LocalStorage.
+    let db;
+    const DB_NAME = "PDFStorageVaultDB";
+    const STORE_NAME = "pdfs";
+
+    const request = indexedDB.open(DB_NAME, 1);
+
+    request.onerror = function(event) {
+        alert("Database error: " + event.target.errorCode);
+    };
+
+    request.onupgradeneeded = function(event) {
+        db = event.target.result;
+        const objectStore = db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+        objectStore.createIndex("subject", "subject", { unique: false });
+    };
+
+    request.onsuccess = function(event) {
+        db = event.target.result;
+        renderDashboard();
+    };
+
+    // Handle visible file name visualization
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('fileSelectedName').textContent = file.name;
+            if (!document.getElementById('customName').value) {
+                // Auto-fill custom name with filename minus extension
+                document.getElementById('customName').value = file.name.replace(/\.[^/.]+$/, "");
+            }
+        }
+    });
+
+    // Handle Form Submission / Saving to DB
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const subjectInput = document.getElementById('customSubject').value.trim();
+        const nameInput = document.getElementById('customName').value.trim();
+        const fileInput = document.getElementById('fileInput');
+        const file = fileInput.files[0];
+
+        if (!file || file.type !== "application/pdf") {
+            alert("Please select a valid PDF file.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const fileData = event.target.result;
+
+            const newDocument = {
+                subject: subjectInput,
+                name: nameInput,
+                fileName: file.name,
+                fileData: fileData, // ArrayBuffer or Base64
+                dateAdded: new Date().toLocaleDateString(),
+                size: (file.size / (1024 * 1024)).toFixed(2) + " MB"
+            };
+
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            const objectStore = transaction.objectStore(STORE_NAME);
+            const addRequest = objectStore.add(newDocument);
+
+            addRequest.onsuccess = function() {
+                // Reset fields
+                document.getElementById('uploadForm').reset();
+                document.getElementById('fileSelectedName').textContent = "";
+                renderDashboard();
+            };
+        };
+
+        reader.readAsDataURL(file); // Store as data URI for clean visualization inside an iframe/embed
+    });
+
+    let currentFilter = "ALL";
+
+    function renderDashboard() {
+        const transaction = db.transaction([STORE_NAME], "readonly");
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const getAllRequest = objectStore.getAll();
+
+        getAllRequest.onsuccess = function() {
+            const items = getAllRequest.result;
+            
+            // Update item count badge
+            document.getElementById('storageCount').textContent = `${items.length} File${items.length === 1 ? '' : 's'} Saved`;
+
+            // Process Subjects for Filter Tabs and Datalist
+            const subjects = new Set();
+            items.forEach(item => subjects.add(item.subject));
+            
+            renderFilterTabs(Array.from(subjects));
+            renderDataList(Array.from(subjects));
+            renderCards(items);
+        };
+    }
+
+    function renderFilterTabs(subjects) {
+        const tabsContainer = document.getElementById('subjectTabs');
+        tabsContainer.innerHTML = `<div class="tab ${currentFilter === 'ALL' ? 'active' : ''}" onclick="filterBySubject('ALL')">All Subjects</div>`;
+        
+        subjects.forEach(sub => {
+            const tab = document.createElement('div');
+            tab.className = `tab ${currentFilter === sub ? 'active' : ''}`;
+            tab.textContent = sub;
+            tab.onclick = () => filterBySubject(sub);
+            tabsContainer.appendChild(tab);
+        });
+    }
+
+    function renderDataList(subjects) {
+        const datalist = document.getElementById('existingSubjects');
+        datalist.innerHTML = "";
+        subjects.forEach(sub => {
+            const option = document.createElement('option');
+            option.value = sub;
+            datalist.appendChild(option);
+        });
+    }
+
+    function filterBySubject(subject) {
+        currentFilter = subject;
+        renderDashboard();
+    }
+
+    function renderCards(items) {
+        const listContainer = document.getElementById('pdfList');
+        listContainer.innerHTML = "";
+
+        const filteredItems = currentFilter === "ALL" ? items : items.filter(i => i.subject === currentFilter);
+
+        if (filteredItems.length === 0) {
+            listContainer.innerHTML = `
+                <div class="empty-state">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v3m-3.052 6.24c-.546.545-1.433.545-1.979 0l-3.97-3.97a1.4 1.4 0 0 1 0-1.98l3.97-3.97c.546-.546 1.433-.546 1.979 0l3.97 3.97a1.4 1.4 0 0 1 0 1.98l-3.97 3.97z"/>
+                    </svg>
+                    <p>No PDFs found under this view. Upload some files to get started!</p>
+                </div>`;
+            return;
+        }
+
+        filteredItems.forEach(item => {
+            const card = document.createElement('div');
+            card.className = "pdf-card";
+            card.innerHTML = `
+                <div>
+                    <div class="subject-badge" title="${escapeHtml(item.subject)}">${escapeHtml(item.subject)}</div>
+                    <div class="pdf-title" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+                    <div class="pdf-meta">Added: ${item.dateAdded} • ${item.size}</div>
+                </div>
+                <div class="pdf-actions">
+                    <button class="btn-view" onclick="viewPdf('${item.id}')">Open / View</button>
+                    <button class="btn-delete" onclick="deletePdf(${item.id})" title="Delete File">🗑️</button>
+                </div>
+            `;
+            listContainer.appendChild(card);
+        });
+    }
+
+    function viewPdf(id) {
+        const transaction = db.transaction([STORE_NAME], "readonly");
+        const objectStore = transaction.objectStore(STORE_NAME);
+        const request = objectStore.get(Number(id));
+
+        request.onsuccess = function() {
+            const record = request.result;
+            if (record) {
+                // Open file base64 data in a new tab
+                const newWindow = window.open();
+                newWindow.document.write(`
+                    <title>${escapeHtml(record.name)}</title>
+                    <body style="margin:0;padding:0;background:#525659;">
+                        <embed width="100%" height="100%" src="${record.fileData}" type="application/pdf" style="border:none;">
+                    </body>
+                `);
+            }
+        };
+    }
+
+    function deletePdf(id) {
+        if(confirm("Are you sure you want to delete this document from your vault?")) {
+            const transaction = db.transaction([STORE_NAME], "readwrite");
+            const objectStore = transaction.objectStore(STORE_NAME);
+            const request = objectStore.delete(id);
+
+            request.onsuccess = function() {
+                renderDashboard();
+            };
+        }
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+</script>
+
+</body>
+</html>
