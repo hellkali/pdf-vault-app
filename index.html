@@ -539,14 +539,34 @@
         request.onsuccess = function() {
             const record = request.result;
             if (record) {
-                // Open file base64 data in a new tab
-                const newWindow = window.open();
-                newWindow.document.write(`
-                    <title>${escapeHtml(record.name)}</title>
-                    <body style="margin:0;padding:0;background:#525659;">
-                        <embed width="100%" height="100%" src="${record.fileData}" type="application/pdf" style="border:none;">
-                    </body>
-                `);
+                try {
+                    // 1. Strip the "data:application/pdf;base64," prefix to get the raw data
+                    const base64Data = record.fileData.split(',')[1];
+                    
+                    // 2. Decode the Base64 string back into binary characters
+                    const byteCharacters = atob(base64Data);
+                    
+                    // 3. Create an array of bytes
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
+                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                    }
+                    const byteArray = new Uint8Array(byteNumbers);
+                    
+                    // 4. Reconstruct the actual PDF File (Blob)
+                    const blob = new Blob([byteArray], { type: 'application/pdf' });
+                    
+                    // 5. Create a clean, temporary local URL for the operating system
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    // 6. Launch it! This triggers Android/iOS to open their native PDF viewer apps.
+                    window.open(blobUrl, '_blank');
+                    
+                    // Cleanup memory after 1 minute
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+                } catch (error) {
+                    alert("Error opening document: " + error.message);
+                }
             }
         };
     }
