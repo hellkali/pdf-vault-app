@@ -2,50 +2,57 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ "main" ]
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Source Code
-      uses: actions/checkout@v6
 
-    - name: Set up Node.js Environment
-      uses: actions/setup-node@v6
-      with:
-        node-version: 24
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
 
-    - name: Set up Java JDK 17 (Native)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y openjdk-17-jdk
-        echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
-        echo "/usr/lib/jvm/java-17-openjdk-amd64/bin" >> $GITHUB_PATH
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Prepare Web Assets & Install Dependencies
-      run: |
-        npm install
-        mkdir www
-        mv index.html www/
-        npx cap init "PDF Vault" "com.pdfvault.app" --web-dir=www
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
 
-    - name: Add Android Platform Wrapper
-      run: |
-        npx cap add android
-        npx cap sync android
+      - name: Install Dependencies
+        run: npm install
 
-    - name: Compile Source Code to Android APK
-      run: |
-        cd android
-        ./gradlew assembleDebug
+      - name: Create WWW Folder
+        run: |
+          mkdir -p www
+          cp index.html www/index.html
 
-    - name: Upload Finished APK File
-      uses: actions/upload-artifact@v4
-      with:
-        name: PDF-Vault-Mobile-App
-        path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Initialize Capacitor
+        run: |
+          npx cap init "PDF Vault" "com.pdfvault.app" --web-dir=www
+
+      - name: Add Android Platform
+        run: npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync
+
+      - name: Grant Gradle Permission
+        run: chmod +x android/gradlew
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PDF-Vault-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
